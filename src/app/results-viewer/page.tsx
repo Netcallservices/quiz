@@ -88,7 +88,7 @@ useEffect(() => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center">Results Viewer</CardTitle>
+            <CardTitle className="text-center">Your assessment submitted successfully. Thank You</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
