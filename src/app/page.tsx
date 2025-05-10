@@ -13,7 +13,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-saffron-100 flex flex-col">
       <header className="w-full py-6 px-4 sm:px-6 lg:px-8 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.div
@@ -22,7 +22,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-2xl font-bold text-indigo-700">Netcall Services</h1>
-            <p className="text-sm text-gray-600">Sales Capacity Assessment</p>
+            <p className="text-sm text-gray-600"> Netcall Career Assessment</p>
           </motion.div>
           
           <motion.div
@@ -34,7 +34,7 @@ export default function Home() {
               href="/results-viewer"
               className="text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors"
             >
-              View Results
+              Scoreboard
             </Link>
           </motion.div>
         </div>

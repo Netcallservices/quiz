@@ -14,7 +14,7 @@ export default function ResultsViewer() {
   const [authenticated, setAuthenticated] = useState(false);
   
   // Password protection (consider moving to environment variables)
-  const ADMIN_PASSWORD = "netcall2024";
+  const ADMIN_PASSWORD = "Netcall$123";
   
   useEffect(() => {
   if (authenticated) {
@@ -47,12 +47,12 @@ useEffect(() => {
       setAuthenticated(true);
       setShowPassword(false);
     } else {
-      alert("Incorrect password");
+      alert("Incorrect password MF");
     }
   };
   
   const clearAllResults = () => {
-    if (confirm("Are you sure you want to clear all results? This cannot be undone.")) {
+    if (confirm("Are you sure you want to clear all results? This cannot be undone, think twice.")) {
       localStorage.removeItem('quizResults');
       setResults([]);
     }
@@ -94,7 +94,7 @@ useEffect(() => {
             <div className="space-y-4">
               <input
                 type="password"
-                placeholder="Enter admin password"
+                placeholder="Wish you a great day."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none"
