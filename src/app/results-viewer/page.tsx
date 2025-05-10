@@ -47,7 +47,7 @@ useEffect(() => {
       setAuthenticated(true);
       setShowPassword(false);
     } else {
-      alert("Incorrect password MF");
+      alert("Incorrect password Bro");
     }
   };
   
