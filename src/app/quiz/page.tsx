@@ -1,0 +1,233 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ArrowRight, Send } from "lucide-react";
+import { quizQuestions, quizTitle } from "../data/quiz-questions";
+import { toast } from "sonner";
+
+type QuizResult = {
+  question: string;
+  answer: string;
+  value: number;
+};
+
+type QuizResultSummary = {
+  name: string;
+  email: string;
+  totalScore: number;
+  maxPossibleScore: number;
+  percentage: number;
+  timestamp: string;
+  details: QuizResult[];
+};
+
+export default function Quiz() {
+  const router = useRouter();
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("quizUser");
+    if (!userData) {
+      router.push("/login");
+      return;
+    }
+    setUser(JSON.parse(userData));
+  }, [router]);
+
+  const handleAnswer = (value: string) => {
+    setAnswers(prev => ({ ...prev, [currentQuestion]: value }));
+  };
+
+  const navigateQuestion = (direction: "next" | "prev") => {
+    setCurrentQuestion(prev => {
+      const newValue = direction === "next" ? prev + 1 : prev - 1;
+      return Math.max(0, Math.min(newValue, quizQuestions.length - 1));
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!user) return;
+
+    if (Object.keys(answers).length < quizQuestions.length) {
+      toast.error("Please answer all questions", {
+        description: `You've answered ${Object.keys(answers).length} out of ${quizQuestions.length} questions.`,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const results = quizQuestions.map((question, index) => {
+        const selectedAnswer = answers[index];
+        const answerObject = question.options.find(opt => opt.id === selectedAnswer);
+        return {
+          question: question.text,
+          answer: answerObject?.text || "No answer",
+          value: answerObject?.value || 0
+        };
+      });
+
+      // Calculate scores
+      const totalScore = results.reduce((sum, result) => sum + result.value, 0);
+      const maxPossibleScore = quizQuestions.length * 5;
+      const percentage = Math.round((totalScore / maxPossibleScore) * 100);
+
+      // Create result object
+      const resultEntry: QuizResultSummary = {
+        name: user.name,
+        email: user.email,
+        totalScore,
+        maxPossibleScore,
+        percentage,
+        timestamp: new Date().toISOString(),
+        details: results
+      };
+
+      // Save to localStorage
+      const existingResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+      const updatedResults = [resultEntry, ...existingResults];
+      localStorage.setItem('quizResults', JSON.stringify(updatedResults));
+
+      // Clear temporary data
+      localStorage.removeItem("currentQuizSession");
+      localStorage.removeItem("quizProgress");
+
+      // Redirect to results viewer
+      router.push("/results-viewer");
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      toast.error("There was a problem submitting your quiz. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+  const currentQuestionData = quizQuestions[currentQuestion];
+  const isLastQuestion = currentQuestion === quizQuestions.length - 1;
+  const isAnswered = answers[currentQuestion] !== undefined;
+
+  if (!user) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      <header className="w-full py-6 px-4 sm:px-6 lg:px-8 bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-indigo-700">Netcall Services</h1>
+            <p className="text-sm text-gray-600">{quizTitle}</p>
+          </div>
+          <div className="text-sm text-gray-600">
+            Welcome, <span className="font-medium">{user.name}</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
+        <div className="max-w-3xl w-full">
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Question {currentQuestion + 1} of {quizQuestions.length}
+              </span>
+              <span className="text-sm font-medium text-gray-700">
+                {progress.toFixed(0)}% Complete
+              </span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuestion}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="shadow-lg border-0">
+                <CardContent className="p-6 sm:p-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                    {currentQuestionData.text}
+                  </h2>
+
+                  <RadioGroup
+                    value={answers[currentQuestion]}
+                    onValueChange={handleAnswer}
+                    className="space-y-4"
+                  >
+                    {currentQuestionData.options.map((option) => (
+                      <div
+                        key={option.id}
+                        className="flex items-center space-x-2 border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <RadioGroupItem value={option.id} id={option.id} />
+                        <Label htmlFor={option.id} className="flex-grow cursor-pointer">
+                          {option.text}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+
+                  <div className="flex justify-between mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigateQuestion("prev")}
+                      disabled={currentQuestion === 0}
+                      className="flex items-center"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                    </Button>
+
+                    {isLastQuestion ? (
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={!isAnswered || isSubmitting}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {isSubmitting ? (
+                          "Submitting..."
+                        ) : (
+                          <>
+                            Submit Quiz <Send className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigateQuestion("next")}
+                        disabled={!isAnswered}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        Next <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      <footer className="w-full py-6 px-4 sm:px-6 lg:px-8 bg-white shadow-inner">
+        <div className="max-w-7xl mx-auto text-center text-gray-500">
+          <p>© {new Date().getFullYear()} Netcall Services. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
