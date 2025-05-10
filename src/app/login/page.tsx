@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-orange-400 to-saffron-300 flex flex-col">
       <header className="w-full py-6 px-4 sm:px-6 lg:px-8 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.div
