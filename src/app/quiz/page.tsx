@@ -18,15 +18,15 @@ type QuizResult = {
   value: number;
 };
 
-type QuizResultSummary = {
-  name: string;
-  email: string;
-  totalScore: number;
-  maxPossibleScore: number;
-  percentage: number;
-  timestamp: string;
-  details: QuizResult[];
-};
+// type QuizResultSummary = {
+//   name: string;
+//   email: string;
+//   totalScore: number;
+//   maxPossibleScore: number;
+//   percentage: number;
+//   timestamp: string;
+//   details: QuizResult[];
+// };
 
 export default function Quiz() {
   const router = useRouter();
