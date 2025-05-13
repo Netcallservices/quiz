@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -30,32 +30,56 @@ type QuizResultSummary = {
 
 export default function Quiz() {
   const router = useRouter();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // State hooks
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
 
+  // User effect
   useEffect(() => {
     const userData = localStorage.getItem("quizUser");
     if (!userData) {
       router.push("/login");
-      return;
+    } else {
+      setUser(JSON.parse(userData));
     }
-    setUser(JSON.parse(userData));
   }, [router]);
 
-  const handleAnswer = (value: string) => {
-    setAnswers(prev => ({ ...prev, [currentQuestion]: value }));
-  };
+  // Timer management
+  useEffect(() => {
+    if (!user) return;
 
-  const navigateQuestion = (direction: "next" | "prev") => {
-    setCurrentQuestion(prev => {
-      const newValue = direction === "next" ? prev + 1 : prev - 1;
-      return Math.max(0, Math.min(newValue, quizQuestions.length - 1));
-    });
-  };
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0) {
+          handleAutoSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-  const handleSubmit = async () => {
+    intervalRef.current = timer;
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [user]);
+
+  // Time warnings
+  useEffect(() => {
+    if (timeLeft === 600) { // 10 minutes remaining (900 - 600 = 300s = 5mins elapsed)
+      toast.warning("10 minutes remaining!", { duration: 5000 });
+    }
+  }, [timeLeft]);
+
+  // Stable callback for submission
+  const handleSubmit = useCallback(async () => {
     if (!user) return;
 
     if (Object.keys(answers).length < quizQuestions.length) {
@@ -78,12 +102,10 @@ export default function Quiz() {
         };
       });
 
-      // Calculate scores
       const totalScore = results.reduce((sum, result) => sum + result.value, 0);
       const maxPossibleScore = quizQuestions.length * 5;
       const percentage = Math.round((totalScore / maxPossibleScore) * 100);
 
-     // Send results via email
       const response = await fetch('/api/send-result', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,16 +128,44 @@ export default function Quiz() {
     } finally {
       setIsSubmitting(false);
     }
+  }, [user, answers, router]);
+
+  // Auto-submit handler
+  const handleAutoSubmit = useCallback(async () => {
+    if (isSubmitted || !user) return;
+    setIsSubmitted(true);
+    await handleSubmit();
+  }, [isSubmitted, user, handleSubmit]);
+
+  // Answer handling
+  const handleAnswer = (value: string) => {
+    setAnswers(prev => ({ ...prev, [currentQuestion]: value }));
   };
+
+  // Question navigation
+  const navigateQuestion = (direction: "next" | "prev") => {
+    setCurrentQuestion(prev => {
+      const newValue = direction === "next" ? prev + 1 : prev - 1;
+      return Math.max(0, Math.min(newValue, quizQuestions.length - 1));
+    });
+  };
+
+  // Format time display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Conditional return AFTER all hooks
+  if (!user) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
   const currentQuestionData = quizQuestions[currentQuestion];
   const isLastQuestion = currentQuestion === quizQuestions.length - 1;
   const isAnswered = answers[currentQuestion] !== undefined;
-
-  if (!user) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 to-saffron-300 flex flex-col">
@@ -125,8 +175,14 @@ export default function Quiz() {
             <h1 className="text-2xl font-bold text-indigo-700">Netcall Services</h1>
             <p className="text-sm text-gray-600">{quizTitle}</p>
           </div>
-          <div className="text-sm text-gray-600">
-            Welcome, <span className="font-medium">{user.name}</span>
+
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-red-600">
+              Time Remaining: {formatTime(timeLeft)}
+            </div>
+            <div className="text-sm text-gray-600">
+              Welcome, <span className="font-medium">{user.name}</span>
+            </div>
           </div>
         </div>
       </header>

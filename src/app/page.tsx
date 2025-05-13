@@ -22,7 +22,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-2xl font-bold text-indigo-700">Netcall Services</h1>
-            <p className="text-sm text-gray-600"> Netcall Career Assessment</p>
+            <p className="text-sm text-gray-600">Career Assessment</p>
           </motion.div>
           
           <motion.div
@@ -69,7 +69,7 @@ export default function Home() {
                 <h3 className="text-lg font-medium text-indigo-800 mb-2">How it works:</h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
                   <li>Sign in with your name and email</li>
-                  <li>Answer all 15 questions at your own pace</li>
+                  <li>Answer all 15 questions within the given time.</li>
                   <li>Submit your answers to receive your results</li>
                 </ul>
               </div>
