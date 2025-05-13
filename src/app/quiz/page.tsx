@@ -83,31 +83,26 @@ export default function Quiz() {
       const maxPossibleScore = quizQuestions.length * 5;
       const percentage = Math.round((totalScore / maxPossibleScore) * 100);
 
-      // Create result object
-      const resultEntry: QuizResultSummary = {
-        name: user.name,
-        email: user.email,
-        totalScore,
-        maxPossibleScore,
-        percentage,
-        timestamp: new Date().toISOString(),
-        details: results
-      };
+     // Send results via email
+      const response = await fetch('/api/send-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateName: user.name,
+          candidateEmail: user.email,
+          totalScore,
+          percentage,
+          results
+        })
+      });
 
-      // Save to localStorage
-      const existingResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
-      const updatedResults = [resultEntry, ...existingResults];
-      localStorage.setItem('quizResults', JSON.stringify(updatedResults));
+      if (!response.ok) throw new Error('Failed to send results');
 
-      // Clear temporary data
-      localStorage.removeItem("currentQuizSession");
-      localStorage.removeItem("quizProgress");
-
-      // Redirect to results viewer
-      router.push("/results-viewer");
+      toast.success("Results submitted successfully!");
+      router.push("/success");
     } catch (error) {
-      console.error("Error submitting quiz:", error);
-      toast.error("There was a problem submitting your quiz. Please try again.");
+      console.error("Submission error:", error);
+      toast.error("Failed to submit results. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
