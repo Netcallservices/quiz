@@ -12,11 +12,11 @@ import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import { quizQuestions, quizTitle } from "../data/quiz-questions";
 import { toast } from "sonner";
 
-type QuizResult = {
-  question: string;
-  answer: string;
-  value: number;
-};
+// type QuizResult = {
+//   question: string;
+//   answer: string;
+//   value: number;
+// };
 
 // type QuizResultSummary = {
 //   name: string;
@@ -38,7 +38,7 @@ export default function Quiz() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
   // User effect
   useEffect(() => {
@@ -69,17 +69,10 @@ export default function Quiz() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [user]);
+}, [user]);
 
-  // Time warnings
-  useEffect(() => {
-    if (timeLeft === 600) { // 10 minutes remaining (900 - 600 = 300s = 5mins elapsed)
-      toast.warning("10 minutes remaining!", { duration: 5000 });
-    }
-  }, [timeLeft]);
-
-  // Stable callback for submission
-  const handleSubmit = useCallback(async () => {
+// Stable callback for submission
+const handleSubmit = useCallback(async () => {
     if (!user) return;
 
     if (Object.keys(answers).length < quizQuestions.length) {
@@ -136,6 +129,15 @@ export default function Quiz() {
     setIsSubmitted(true);
     await handleSubmit();
   }, [isSubmitted, user, handleSubmit]);
+
+  useEffect(() => {
+    if (timeLeft === 300) {
+      toast.warning("10 minutes remaining!", { duration: 5000 });
+    }
+    if (timeLeft <= 0) {
+      handleAutoSubmit();
+    }
+  }, [timeLeft, handleAutoSubmit]);
 
   // Answer handling
   const handleAnswer = (value: string) => {
