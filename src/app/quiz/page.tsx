@@ -132,7 +132,7 @@ const handleSubmit = useCallback(async () => {
 
   useEffect(() => {
     if (timeLeft === 300) {
-      toast.warning("10 minutes remaining!", { duration: 5000 });
+      toast.warning("5 minutes remaining, hurry up!", { duration: 5000 });
     }
     if (timeLeft <= 0) {
       handleAutoSubmit();
