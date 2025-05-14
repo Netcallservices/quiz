@@ -2,19 +2,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-interface SendResultRequestBody {
-  candidateName: string;
-  candidateEmail: string;
-  totalScore: number;
-  percentage: number;
-  results: Array<{
-    question: string;
-    answer: string;
-    value: number;
-  }>;
-}
-
-
 interface ResultData {
   question: string;
   answer: string;
