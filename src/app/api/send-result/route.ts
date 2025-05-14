@@ -17,27 +17,41 @@ interface RequestBody {
 }
 
 export async function POST(request: Request) {
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
   try {
-    const { candidateName, candidateEmail, totalScore, percentage, results } = 
-      await request.json() as RequestBody;
+    // Validate environment variables first
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD || !process.env.ADMIN_EMAIL) {
+      throw new Error("Email configuration is missing in environment variables");
+    }
 
+    // Parse and validate request body
+    const body: RequestBody = await request.json();
+    if (!body.candidateName || !body.candidateEmail || !body.results) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    // Create transporter inside try block
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    // Build email content
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>New Quiz Submission from ${candidateName}</h2>
-        <p>Email: ${candidateEmail}</p>
-        <p>Score: ${totalScore} (${percentage}%)</p>
+        <h2>New Quiz Submission from ${body.candidateName}</h2>
+        <p><strong>Candidate Email:</strong> ${body.candidateEmail}</p>
+        <p><strong>Total Score:</strong> ${body.totalScore}</p>
+        <p><strong>Percentage:</strong> ${body.percentage}%</p>
         <h3>Detailed Results:</h3>
         <ul>
-          ${results.map(result => `
-            <li>
+          ${body.results.map(result => `
+            <li style="margin-bottom: 15px;">
               <strong>${result.question}</strong><br>
               Answer: ${result.answer}<br>
               Score: ${result.value}
@@ -47,18 +61,25 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    await transporter.sendMail({
+    // Send email
+    const info = await transporter.sendMail({
       from: `Quiz System <${process.env.EMAIL_USER}>`,
       to: process.env.ADMIN_EMAIL,
-      subject: `New Quiz Result - ${candidateName}`,
+      subject: `New Quiz Result - ${body.candidateName}`,
       html: emailHtml,
     });
 
+    console.log("Email sent:", info.messageId);
     return NextResponse.json({ success: true });
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Email send error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to send results' },
+      { 
+        success: false, 
+        error: error.message || "Failed to send results",
+        details: error.response?.body || null 
+      },
       { status: 500 }
     );
   }
