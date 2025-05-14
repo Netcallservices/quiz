@@ -72,24 +72,29 @@ export async function POST(request: Request) {
     console.log("Email sent:", info.messageId);
     return NextResponse.json({ success: true });
 
-  }  catch (error: unknown) {
+  } catch (error: unknown) {
+  console.error('Email send error:', error);
+
   let errorMessage = "Failed to send results";
   let errorDetails = null;
 
   if (error instanceof Error) {
     errorMessage = error.message;
-  }
 
-  // Optional: If using Node.js/Nodemailer-specific errors
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    errorDetails = (error as any).response?.body;
+    // If it's a Nodemailer-style error with a response object
+    const maybeResponse = (error as Error & { response?: { body?: unknown } }).response;
+    if (maybeResponse && maybeResponse.body) {
+      errorDetails = maybeResponse.body;
+    }
   }
-
-  console.error('Email send error:', error);
 
   return NextResponse.json(
-    { success: false, error: errorMessage, details: errorDetails },
+    { 
+      success: false,
+      error: errorMessage,
+      details: errorDetails
+    },
     { status: 500 }
   );
-  }
+}
 }
