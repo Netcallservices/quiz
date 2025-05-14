@@ -12,22 +12,6 @@ import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import { quizQuestions, quizTitle } from "../data/quiz-questions";
 import { toast } from "sonner";
 
-// type QuizResult = {
-//   question: string;
-//   answer: string;
-//   value: number;
-// };
-
-// type QuizResultSummary = {
-//   name: string;
-//   email: string;
-//   totalScore: number;
-//   maxPossibleScore: number;
-//   percentage: number;
-//   timestamp: string;
-//   details: QuizResult[];
-// };
-
 export default function Quiz() {
   const router = useRouter();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -37,6 +21,7 @@ export default function Quiz() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
@@ -50,29 +35,8 @@ export default function Quiz() {
     }
   }, [router]);
 
-  // Timer management
-  useEffect(() => {
-    if (!user) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 0) {
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    intervalRef.current = timer;
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-}, [user]);
-
-// Stable callback for submission
-const handleSubmit = useCallback(async () => {
+  // Stable callback for submission
+  const handleSubmit = useCallback(async () => {
     if (!user) return;
 
     if (Object.keys(answers).length < quizQuestions.length) {
@@ -129,6 +93,27 @@ const handleSubmit = useCallback(async () => {
     setIsSubmitted(true);
     await handleSubmit();
   }, [isSubmitted, user, handleSubmit]);
+
+  // Timer management
+  useEffect(() => {
+    if (!user) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0) {
+          handleAutoSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    intervalRef.current = timer;
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [user, handleAutoSubmit]);
 
   useEffect(() => {
     if (timeLeft === 300) {
@@ -218,7 +203,7 @@ const handleSubmit = useCallback(async () => {
                   </h2>
 
                   <RadioGroup
-                    value={answers[currentQuestion]}
+                    value={answers[currentQuestion] || ""} 
                     onValueChange={handleAnswer}
                     className="space-y-4"
                   >
