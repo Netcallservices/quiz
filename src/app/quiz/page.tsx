@@ -76,8 +76,8 @@ const handleSubmit = useCallback(async () => {
     if (!user) return;
 
     if (Object.keys(answers).length < quizQuestions.length) {
-      toast.error("Please answer all questions", {
-        description: `You've answered ${Object.keys(answers).length} out of ${quizQuestions.length} questions.`,
+      toast.error("Please submit the assessment, otherwise it will auto-submit in few seconds", {
+        description: `You've not answered all the questions yet. Please complete the assessment before submitting`,
       });
       return;
     }
